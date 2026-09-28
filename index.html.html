@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game-Day T-Shirt Challenge</title>
+<style>
+:root{--red:#b51d2b;--dark:#171717;--ink:#20242a;--muted:#65707c;--bg:#f4f6f8;--card:#fff;--line:#dce1e6;--gold:#f1b84b;--green:#16794b}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+.wrap{max-width:980px;margin:auto;padding:18px}.hero{background:linear-gradient(135deg,#8f1420,#c32636);color:white;border-radius:22px;padding:26px;position:relative;overflow:hidden}
+.hero h1{margin:0 0 8px;font-size:clamp(28px,5vw,48px)}.hero p{font-size:18px;max-width:700px;margin:0}.icons{font-size:42px;margin-top:14px}
+.grid{display:grid;gap:14px}.three{grid-template-columns:repeat(3,1fr)}.two{grid-template-columns:1fr 1fr}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:14px}
+.metric{text-align:center}.metric .emoji{font-size:30px}.metric b{display:block;font-size:25px;margin-top:5px}
+.note{background:#fff8e8;border:1px solid #f2d59b;border-radius:14px;padding:14px}.locked{background:#eef5ff;border:1px solid #c8d9ef;border-radius:14px;padding:14px}
+label{font-weight:700;font-size:18px}input{width:100%;font-size:26px;font-weight:800;padding:12px;border:2px solid var(--line);border-radius:12px;margin-top:8px}
+.presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}button{min-height:46px;border-radius:11px;border:1px solid var(--line);background:white;font-size:16px;font-weight:700;cursor:pointer}
+.primary{background:var(--red);color:white;border-color:var(--red);width:100%;margin-top:12px;padding:12px}.primary:hover{filter:brightness(.95)}
+.reveal{text-align:center;display:flex;flex-direction:column;justify-content:center;min-height:235px}.big{font-size:44px;font-weight:900}.hidden{display:none!important}
+.results{grid-template-columns:repeat(4,1fr)}.result{text-align:center;background:#f7f8fa;border-radius:12px;padding:12px}.result span{font-size:13px;color:var(--muted);display:block}.result b{font-size:22px}
+table{width:100%;border-collapse:collapse;min-width:620px}th,td{text-align:left;padding:9px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:13px}.scroll{overflow-x:auto}
+.final{border:2px solid var(--red)}.formula{font-size:22px;font-weight:800}.center{text-align:center}.small{font-size:14px;color:var(--muted)}
+.bar{height:12px;border-radius:99px;background:#e6e9ed;overflow:hidden}.bar>div{height:100%;background:var(--red);width:0;transition:width .3s}
+@media(max-width:700px){.three,.two,.results{grid-template-columns:1fr}.presets{grid-template-columns:repeat(2,1fr)}.wrap{padding:10px}.hero{padding:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section class="hero">
+  <h1>🏈 Game-Day T-Shirt Challenge</h1>
+  <p>You run a college Spirit Shop. A special home-game T-shirt must be ordered before kickoff. Once you order, you cannot reorder. Can you balance selling out against leftover inventory?</p>
+  <div class="icons">👕 📣 🏟️ 💰</div>
+</section>
+
+<section class="grid three">
+ <div class="card metric"><div class="emoji">💵</div><span>Selling price</span><b>$30</b></div>
+ <div class="card metric"><div class="emoji">📦</div><span>Purchase cost</span><b>$12</b></div>
+ <div class="card metric"><div class="emoji">🏷️</div><span>Leftover clearance value</span><b>$6</b></div>
+</section>
+
+<section class="card">
+ <h2 style="margin-top:0">Your forecast</h2>
+ <p>Average demand = <b>500 shirts</b> &nbsp;•&nbsp; Standard deviation = <b>80 shirts</b></p>
+ <div class="locked">🔒 <b>Important:</b> Each round's actual demand is generated and locked <b>before</b> you make your order decision. Your order quantity cannot influence demand.</div>
+ <div style="margin-top:14px"><b>Round <span id="round">1</span> of 5</b><div class="bar"><div id="progress"></div></div></div>
+</section>
+
+<section class="grid two">
+ <div class="card">
+   <h2 style="margin-top:0">1. Make your decision</h2>
+   <label for="order">How many shirts will you order?</label>
+   <input id="order" type="number" min="250" max="800" step="10" value="500">
+   <div class="presets">
+     <button data-q="400">400</button><button data-q="500">500</button><button data-q="550">550</button><button data-q="600">600</button>
+   </div>
+   <button id="play" class="primary">PLACE ORDER → REVEAL DEMAND</button>
+ </div>
+ <div class="card reveal">
+   <h2>2. Demand reveal</h2>
+   <div id="mystery"><div style="font-size:58px">🎟️</div><div class="big">???</div><p class="small">Customers haven't arrived yet...</p></div>
+   <div id="actual" class="hidden"><div style="font-size:54px">🏟️</div><div class="small">ACTUAL GAME-DAY DEMAND</div><div id="demand" class="big"></div></div>
+ </div>
+</section>
+
+<section id="outcome" class="card hidden" aria-live="polite">
+ <h2 id="verdict" style="margin-top:0"></h2>
+ <div class="grid results">
+  <div class="result">🛒<span>Shirts sold</span><b id="sold"></b></div>
+  <div class="result">📦<span>Leftovers</span><b id="left"></b></div>
+  <div class="result">😞<span>Lost sales</span><b id="lost"></b></div>
+  <div class="result">💰<span>Profit</span><b id="profit"></b></div>
+ </div>
+ <p id="story" class="note"></p>
+ <button id="next" class="primary">NEXT GAME DAY →</button>
+</section>
+
+<section class="card">
+ <h2 style="margin-top:0">🏆 Manager Scoreboard</h2>
+ <p class="small">Each round uses an independently generated demand value. Restarting creates a fresh five-round game.</p>
+ <div class="scroll"><table><thead><tr><th>Round</th><th>Ordered</th><th>Demand</th><th>Leftovers</th><th>Lost sales</th><th>Profit</th></tr></thead><tbody id="history"></tbody></table></div>
+ <p><b>Total profit: <span id="total">$0</span></b></p>
+ <button id="reset">↻ Restart with New Demand</button>
+</section>
+
+<section id="finale" class="card final hidden">
+ <div class="center"><div style="font-size:55px">🎓</div><h2>You just experienced the Newsvendor Problem.</h2>
+ <p>The challenge is not predicting demand perfectly. It is choosing an order quantity that balances the consequences of ordering too much and too little.</p></div>
+ <div class="grid two">
+  <div class="note"><b>📉 Overage cost</b><div class="formula">Co = $12 − $6 = $6</div><span class="small">Cost associated with one leftover shirt.</span></div>
+  <div class="note"><b>📈 Underage cost</b><div class="formula">Cu = $30 − $12 = $18</div><span class="small">Contribution margin lost from one missed sale.</span></div>
+ </div>
+ <button id="modelBtn" class="primary">REVEAL THE MODEL'S RECOMMENDATION</button>
+ <div id="model" class="hidden center note" style="margin-top:14px">
+  <div class="small">CRITICAL RATIO</div>
+  <div class="formula">18 ÷ (18 + 6) = 0.75</div>
+  <hr style="border:0;border-top:1px solid #ddd;margin:16px 0">
+  <p>Target the <b>75th percentile</b> of demand — <b>not 75% of average demand.</b></p>
+  <div class="big">≈ 554 shirts</div>
+  <p>With μ = 500 and σ = 80, approximately 75% of possible demand outcomes are at or below 554 shirts.</p>
+ </div>
+</section>
+</div>
+
+<script>
+(function(){
+ const N=5, mean=500, sd=80;
+ let round=0,total=0,lockedDemand=null,locked=false;
+ const $=id=>document.getElementById(id);
+ function normal(){
+   let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random();
+   return Math.round(mean+sd*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v));
+ }
+ function generateDemand(){ return Math.max(250,Math.min(800,normal())); }
+ function lockNextDemand(){ lockedDemand=generateDemand(); }
+ function prepare(){
+   locked=false; $('order').disabled=false; $('play').disabled=false;
+   $('mystery').classList.remove('hidden'); $('actual').classList.add('hidden'); $('outcome').classList.add('hidden');
+   $('round').textContent=round+1; $('progress').style.width=(round/N*100)+'%';
+   lockNextDemand();
+ }
+ document.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>{if(!locked)$('order').value=b.dataset.q;}));
+ $('play').addEventListener('click',()=>{
+   if(locked||round>=N)return;
+   let q=Math.round(Number($('order').value));
+   if(!Number.isFinite(q))q=500; q=Math.max(250,Math.min(800,q)); $('order').value=q;
+   locked=true;$('order').disabled=true;$('play').disabled=true;
+   const d=lockedDemand,sold=Math.min(q,d),left=Math.max(q-d,0),lost=Math.max(d-q,0),p=sold*30+left*6-q*12;
+   total+=p;
+   $('mystery').classList.add('hidden');$('actual').classList.remove('hidden');$('demand').textContent=d+' shirts';
+   $('sold').textContent=sold;$('left').textContent=left;$('lost').textContent=lost;$('profit').textContent='$'+p.toLocaleString();
+   if(left>0){$('verdict').textContent='📦 Leftovers';$('story').textContent=`You ordered ${q}. Demand was ${d}, leaving ${left} shirts to clear after the game.`}
+   else if(lost>0){$('verdict').textContent='🔥 Sold out — but too early';$('story').textContent=`You ordered ${q}. Demand was ${d}, so ${lost} customers could not buy a shirt.`}
+   else{$('verdict').textContent='🎯 Exact match';$('story').textContent='Your order matched demand exactly this round.'}
+   $('outcome').classList.remove('hidden');
+   const tr=document.createElement('tr');tr.innerHTML=`<td>${round+1}</td><td>${q}</td><td>${d}</td><td>${left}</td><td>${lost}</td><td>$${p.toLocaleString()}</td>`;$('history').appendChild(tr);
+   round++;$('total').textContent='$'+total.toLocaleString();$('progress').style.width=(round/N*100)+'%';
+   $('next').textContent=round>=N?'SEE WHAT YOU LEARNED ↓':'NEXT GAME DAY →';
+ });
+ $('next').addEventListener('click',()=>{
+   if(round>=N){$('outcome').classList.add('hidden');$('finale').classList.remove('hidden');$('finale').scrollIntoView({behavior:'smooth'});}
+   else prepare();
+ });
+ $('modelBtn').addEventListener('click',()=>{$('model').classList.remove('hidden');$('modelBtn').disabled=true;$('modelBtn').textContent='MODEL RECOMMENDATION REVEALED';});
+ $('reset').addEventListener('click',()=>{round=0;total=0;$('history').innerHTML='';$('total').textContent='$0';$('finale').classList.add('hidden');$('model').classList.add('hidden');$('modelBtn').disabled=false;$('modelBtn').textContent="REVEAL THE MODEL'S RECOMMENDATION";$('order').value=500;prepare();window.scrollTo({top:0,behavior:'smooth'});});
+ prepare();
+})();
+</script>
+</body>
+</html>
